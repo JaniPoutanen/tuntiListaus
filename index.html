@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+        <title>Tuntikirjanpito</title>
+    </head>
+    <body>
+		<div data-role="page" id="etusivu">
+			<div data-role="header">
+				<h1>Etusivu</h1>
+			</div>
+
+			<div data-role="main" class="ui-content">
+				<div id="paiva"></div>
+				<p>
+					<label for="nimi">Nimi:</label>
+					<input type="text" name="nimi" id="nimi">
+				</p>
+				<hr>				
+				<p>
+					<button class="ui-btn ui-btn-inline ui-corner-all" id="lisaa">Lisää nimi listaan</button>
+					<button class="ui-btn ui-btn-inline ui-corner-all" id="tyhjennaLista" disabled>Tyhjennä lista</button>
+				</p>
+							
+				<hr>
+				<ul data-role="listview" id="nimiLista" data-inset="true"></ul>		
+								
+				<hr>
+				<a href="#asetukset">Asetukset</a>
+			</div>
+
+			<div data-role="footer">
+				<h1>Footer Text</h1>
+			</div>
+		</div>
+
+		<div data-role="page" id="asetukset">
+			<div data-role="header">
+				<h1>Asetukset</h1>
+			</div>
+
+			<div data-role="main" class="ui-content">
+				<div id="paiva"></div>
+				<a href="#etusivu">Etusivu</a>
+			</div>
+
+			<div data-role="footer">
+				<h1>Footer Text</h1>
+			</div>
+		</div>
+        <script type="text/javascript" src="cordova.js"></script>
+		<script>
+		var nimitulokset = []; //Taulukko nimituloksia varten
+		var nimirivi; //Muuttuja nimi-tulos objektia varten
+		
+		$(document).one("pagebeforecreate", function () { //Ennen minkä tahansa sivun luomista, tehdään kerran (.one)	
+			$("#popupMenu").enhanceWithin().popup();
+		});
+		
+		$(document).on("pagecreate", "#etusivu", function() { 	//Sivun luonti, tehdään kerran
+					$("#paiva").text(haePaiva());
+		});
+		
+		$(document).on("pagecreate", "#asetukset", function() {		//Sivun luonti, tehdään kerran
+
+		});
+		
+		$(document).on("pagecontainerbeforehide", function( event, ui ) {			
+			var prevPage = ui.prevPage[0].id;	
+			if(prevPage=="etusivu"){
+				nimitulokset = []; //taulukon tyhjennys
+				$("#nimiLista li").each(function(index){ //Käydään nimilista -listviewn rivit läpi
+					nimirivi = {}; //muuttujan tyhjennys
+					nimirivi["nimi"]=$(this).text();									
+					nimitulokset.push(nimirivi); //lisätään nimirivi nimitulokset listaan					
+				});
+				localStorage.setItem("nimiTulosObj", JSON.stringify(nimitulokset));
+				$("#nimiLista").text(""); //Tyhjennetään nimilista -listview
+			}
+		});
+		
+		$(document).on("pagecontainerbeforeshow", function( event, ui ) {	//Ennen minkä tahansa sivun näyttämistä. (pagebeforeshow is deprecated)	
+			var toPage = ui.toPage[0].id; //Mille sivulle ollaan menossa, palauttaa sivun id:n			
+			if(toPage=="etusivu"){
+				$("#paiva").css("color", "black");				
+			}else if(toPage=="lista"){
+				$("#listaLinkki").hide();
+				if(localStorage.getItem("nimiTulosObj")!=null){
+					//täytetään nimitulokset taulukko nimiTulosObjektista
+					nimitulokset=JSON.parse(localStorage.getItem("nimiTulosObj"));			
+				}				
+				$.each(nimitulokset, function(index, value){
+					$("#nimiLista").append("<li class='list'><a href='#'>"	+ value.nimi + "</a></li>");
+				});
+				$("#nimiLista").listview("refresh");	
+				if ($("#nimiLista li").size() > 0) {
+					$("#tyhjennaLista").prop("disabled", false);	
+				}				
+			}else if(toPage=="asetukset"){
+				
+			}
+		});
+		
+		$(document).on("pagecontainershow", function( event, ui ) {	//Mikä tahansa sivu näytetään.	
+			var toPage = ui.toPage[0].id; //Mikä sivu on näytetty, palauttaa sivun id:n				
+		});
+		
+		$("#paiva").on("tap", function() {
+			$("#paiva").css("color", "green");
+		});		
+		
+		$("#lisaa").on("tap", function() {
+			var nimi = $("#nimi").val();
+			if(nimi!=""){
+				$("#nimiLista").append("<li class='list'><a href='#'>" + nimi + "</a></li>");
+				$("#nimiLista").listview("refresh");
+				$("#nimi").val("");
+				$("#tyhjennaLista").prop("disabled", false);
+				
+			}
+		});
+		
+		$("#tyhjennaLista").on("tap", function() {
+			$("#nimiLista").empty();	
+			$("#tyhjennaLista").prop("disabled", true);			
+		});		
+		
+		function haePaiva(){
+			var dVal = new Date();
+			var d = dVal.getDate();
+			var m = dVal.getMonth()+1;
+			var y = dVal.getFullYear();
+			if(d<10){
+				d="0"+d;
+			}
+			if(m<10){
+				m="0"+m;
+			}
+			return d + "." + m + "." + y;
+ 		}
+		</script>		
+    </body>
+</html>
